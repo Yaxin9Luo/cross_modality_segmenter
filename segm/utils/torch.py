@@ -22,9 +22,17 @@ def set_gpu_mode(mode):
     global distributed
     global dist_rank
     global world_size
-    gpu_id = int(os.environ.get("SLURM_LOCALID", 0))
-    dist_rank = int(os.environ.get("SLURM_PROCID", 0))
-    world_size = int(os.environ.get("SLURM_NTASKS", 1))
+    
+    # First check for RANK and LOCAL_RANK (used for PyTorch distributed)
+    if "RANK" in os.environ and "LOCAL_RANK" in os.environ:
+        dist_rank = int(os.environ.get("RANK", 0))
+        gpu_id = int(os.environ.get("LOCAL_RANK", 0))
+        world_size = int(os.environ.get("WORLD_SIZE", 1))
+    # Fallback to SLURM variables
+    else:
+        gpu_id = int(os.environ.get("SLURM_LOCALID", 0))
+        dist_rank = int(os.environ.get("SLURM_PROCID", 0))
+        world_size = int(os.environ.get("SLURM_NTASKS", 1))
 
     distributed = world_size > 1
     use_gpu = mode

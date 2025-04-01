@@ -73,7 +73,16 @@ def main(download_dir):
     train_torch_path = devkit_path / "VOC2010" / "train.pth"
     val_torch_path = devkit_path / "VOC2010" / "val.pth"
 
-    train_dict = torch.load(str(train_torch_path))
+    # Add safe globals for PIL.Image.Image
+    try:
+        from PIL import Image
+        import torch.serialization
+        torch.serialization.add_safe_globals([Image.Image])
+        train_dict = torch.load(str(train_torch_path))
+    except:
+        # Fallback to weights_only=False for backward compatibility
+        print("Using torch.load with weights_only=False for backward compatibility")
+        train_dict = torch.load(str(train_torch_path), weights_only=False)
 
     train_list = []
     for idx, label in tqdm(train_dict.items()):
@@ -86,7 +95,12 @@ def main(download_dir):
     with open(str(imageset_dir / "train.txt"), "w") as f:
         f.writelines(line + "\n" for line in sorted(train_list))
 
-    val_dict = torch.load(str(val_torch_path))
+    # Use the same approach for val_dict
+    try:
+        val_dict = torch.load(str(val_torch_path))
+    except:
+        # Fallback to weights_only=False for backward compatibility
+        val_dict = torch.load(str(val_torch_path), weights_only=False)
 
     val_list = []
     for idx, label in tqdm(val_dict.items()):

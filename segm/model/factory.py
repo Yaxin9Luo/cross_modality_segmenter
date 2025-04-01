@@ -92,6 +92,18 @@ def create_decoder(encoder, decoder_cfg):
         decoder_cfg["n_heads"] = n_heads
         decoder_cfg["d_model"] = dim
         decoder_cfg["d_ff"] = 4 * dim
+        
+        # Handle GPT-2 initialization if specified
+        use_gpt2_init = decoder_cfg.pop("use_gpt2_init", False)
+        gpt2_model_name = decoder_cfg.pop("gpt2_model_name", "gpt2") if use_gpt2_init else "gpt2"
+        
+        # Pass GPT-2 initialization parameters to MaskTransformer
+        decoder_cfg["use_gpt2_init"] = use_gpt2_init
+        decoder_cfg["gpt2_model_name"] = gpt2_model_name
+        
+        if use_gpt2_init:
+            print(f"Creating MaskTransformer with {gpt2_model_name} initialization")
+            
         decoder = MaskTransformer(**decoder_cfg)
     else:
         raise ValueError(f"Unknown decoder: {name}")
